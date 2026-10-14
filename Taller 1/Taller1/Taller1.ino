@@ -1,12 +1,13 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <DHT.h>
 
 // ======================================================
 // CONFIGURACIÓN WIFI
 // ======================================================
 
-const char* WIFI_SSID = "NOMBRE_DE_LA_RED";
-const char* WIFI_PASSWORD = "CONTRASENA_DE_LA_RED";
+const char* WIFI_SSID = "ARTEFACTOS";
+const char* WIFI_PASSWORD = "s^3sQ#9teskVgnb";
 
 
 // ======================================================
@@ -14,7 +15,7 @@ const char* WIFI_PASSWORD = "CONTRASENA_DE_LA_RED";
 // ======================================================
 
 
-const char* MQTT_SERVER = "IP_DE_LA_COMPUTADORA";
+const char* MQTT_SERVER = "10.110.0.33";
 const int MQTT_PORT = 1883;
 
 // Topics utilizados por el dashboard React.
@@ -27,8 +28,11 @@ const char* TOPIC_LUZ = "clima/esp32/luz";
 // CONFIGURACIÓN DE SENSORES
 // ======================================================
 
-// (Estudiante)
-// Definir los pines y objetos necesarios para los sensores.
+#define DHTPIN 4
+#define DHTTYPE DHT22
+#define LDRPIN 34
+
+DHT dht(DHTPIN, DHTTYPE);
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
@@ -91,35 +95,36 @@ void conectarMQTT() {
 
 void publicarSensores() {
 
-  /*
-    (Estudiante)
-      1. Obtener la temperatura.
+  float temperatura = dht.readTemperature();
+  float humedad = dht.readHumidity();
+  int luz = analogRead(LDRPIN);
 
-      2. Obtener la humedad.
+  String temp = String(temperatura);
+  String hum = String(humedad);
+  String lum = String(luz);
 
-      3. Obtener la lectura del sensor de iluminación.
+  mqttClient.publish(TOPIC_TEMPERATURA, temp.c_str());
+  mqttClient.publish(TOPIC_HUMEDAD, hum.c_str());
+  mqttClient.publish(TOPIC_LUZ, lum.c_str());
 
-      4. Preparar los valores para poder publicarlos
-         mediante MQTT.
+  Serial.print("Temperatura: ");
+  Serial.println(temp);
 
-      5. Publicar cada dato en su topic correspondiente:
+  Serial.print("Humedad: ");
+  Serial.println(hum);
 
-         TOPIC_TEMPERATURA
-         TOPIC_HUMEDAD
-         TOPIC_LUZ
+  Serial.print("Luz: ");
+  Serial.println(lum);
 
-      6. Mostrar las mediciones en el Monitor Serial.
-  */
-
+  Serial.println();
 }
 
 void setup() {
 
   Serial.begin(115200);
 
-  // (Estudiante)
-  // Inicializar los sensores y configurar los pines
-  // necesarios.
+  dht.begin();
+  pinMode(LDRPIN, INPUT);
 
   conectarWiFi();
 
